@@ -1,0 +1,5 @@
+name: ScientificModule
+main: fly.scientific.ScientificPlugin
+version: 1.0.0
+api-version: 1.13
+depend: [Mods]

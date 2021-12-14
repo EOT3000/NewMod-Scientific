@@ -1,8 +1,8 @@
 package fly.scientific;
 
 import fly.newmod.NewMod;
-import fly.newmod.bases.ModItem;
 import fly.scientific.machines.DatingMachine;
+import fly.scientific.setup.ScientificAddonSetup;
 import fly.scientific.utils.PlayerIntMapWrapper;
 import fly.scientific.utils.PlayerTimeDataType;
 import net.coreprotect.CoreProtect;
@@ -28,7 +28,7 @@ import java.util.HashMap;
 public class ScientificPlugin extends NewMod.ModExtension implements Listener {
     @Override
     public void load() {
-
+        ScientificAddonSetup.init();
     }
 
     private void updateArmor(Player player, ItemStack stack, int ticks) {
@@ -47,6 +47,23 @@ public class ScientificPlugin extends NewMod.ModExtension implements Listener {
         }
 
         stack.setItemMeta(meta);
+    }
+
+    @Override
+    public void tick(int count) {
+        if(count % 6 == 0) {
+            for(Player player : Bukkit.getOnlinePlayers()) {
+                ItemStack boots = player.getInventory().getBoots();
+                ItemStack leggings = player.getInventory().getLeggings();
+                ItemStack chestplate = player.getInventory().getChestplate();
+                ItemStack helmet = player.getInventory().getHelmet();
+
+                updateArmor(player, boots, count);
+                updateArmor(player, leggings, count);
+                updateArmor(player, chestplate, count);
+                updateArmor(player, helmet, count);
+            }
+        }
     }
 
     @Override
