@@ -1,10 +1,13 @@
 package fly.scientific.machines;
 
+import fly.metals.setup.MetalsAddonSetup;
 import fly.newmod.NewMod;
-import fly.newmod.bases.ModItem;
+import fly.newmod.api.item.type.ModItemType;
+import fly.scientific.ScientificPlugin;
 import net.coreprotect.CoreProtect;
 import net.coreprotect.CoreProtectAPI;
 import org.apache.commons.lang.ArrayUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.BlockState;
@@ -17,6 +20,7 @@ import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.player.PlayerEditBookEvent;
 import org.bukkit.event.world.LootGenerateEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -26,7 +30,7 @@ import java.util.*;
 
 import static org.bukkit.Material.*;
 
-public class DatingMachine extends ModItem implements Listener {
+public class DatingMachineItem extends ModItemType implements Listener {
     private static List<Material> AUTO_AGED = Arrays.asList(
             WOODEN_AXE, WOODEN_HOE, WOODEN_PICKAXE, WOODEN_SHOVEL, WOODEN_SWORD,
             LEATHER_HELMET, LEATHER_CHESTPLATE, LEATHER_LEGGINGS, LEATHER_BOOTS,
@@ -46,10 +50,12 @@ public class DatingMachine extends ModItem implements Listener {
             NETHERITE_AXE, NETHERITE_HOE, NETHERITE_PICKAXE, NETHERITE_SHOVEL, NETHERITE_SWORD,
             NETHERITE_HELMET, NETHERITE_CHESTPLATE, NETHERITE_LEGGINGS, NETHERITE_BOOTS,
 
-            SHEARS, SHIELD, BOW, CROSSBOW, FISHING_ROD, WRITABLE_BOOK, MAP
+            SHEARS, SHIELD, BOW, CROSSBOW, FISHING_ROD, WRITABLE_BOOK, MAP, FLINT_AND_STEEL
             );
 
-    public static NamespacedKey DATE_NAMESPACE = new NamespacedKey(NewMod.get(), "time-of-creation");
+    public static NamespacedKey CREATE_NAMESPACE = new NamespacedKey(NewMod.get(), "time-of-creation");
+    //public static NamespacedKey NETHERITE_NAMESPACE = new NamespacedKey(NewMod.get(), "time-of-netherite");
+    //public static NamespacedKey RENAME_NAMESPACE = new NamespacedKey(NewMod.get(), "time-of-rename");
     public static NamespacedKey SIGNING_NAMESPACE = new NamespacedKey(NewMod.get(), "time-of-signing");
     public static NamespacedKey EDITING_NAMESPACE = new NamespacedKey(NewMod.get(), "time-of-editing");
 
@@ -65,8 +71,19 @@ public class DatingMachine extends ModItem implements Listener {
 
     private Random random = new Random();
 
-    public DatingMachine() {
-        super(Material.DROPPER, "&4Dating Machine", "dating_machine");
+    public DatingMachineItem() {
+        super(Material.DROPPER, new NamespacedKey(ScientificPlugin.get(), "dating_machine"));
+
+        /*ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(NewMod.get(), "ores_machine"), this);
+
+        recipe.shape("APA", "ARA", "ADA");
+
+        recipe.setIngredient('A', MetalsAddonSetup.ZINC_NUGGET.create());
+        recipe.setIngredient('P', TechnologyAddonSetup.PARTICLE_COUNTER);
+        recipe.setIngredient('R', new ItemStack(Material.REDSTONE));
+        recipe.setIngredient('D', MetalsAddonSetup.MAGNET);
+
+        addRecipe(recipe);*/
     }
 
     public static <T> ItemStack tag(T object, ItemStack stack, NamespacedKey key, PersistentDataType<T, T> type) {
@@ -88,14 +105,14 @@ public class DatingMachine extends ModItem implements Listener {
     @EventHandler
     public void onCraft(CraftItemEvent event) {
         if(AUTO_AGED.contains(event.getRecipe().getResult().getType())) {
-            tag(System.currentTimeMillis(), event.getInventory().getResult(), DATE_NAMESPACE, PersistentDataType.LONG);
+            tag(System.currentTimeMillis(), event.getInventory().getResult(), CREATE_NAMESPACE, PersistentDataType.LONG);
             tag(event.getWhoClicked().getUniqueId().toString(), event.getInventory().getResult(), CRAFTER_NAMESPACE, PersistentDataType.STRING);
         }
 
         if(event.getInventory().getResult().getType().equals(WRITTEN_BOOK)) {
             for(ItemStack stack : event.getInventory()) {
                 if(stack != null && stack.getType().equals(WRITABLE_BOOK)) {
-                    tag(stack.getItemMeta().getPersistentDataContainer().getOrDefault(DATE_NAMESPACE, PersistentDataType.LONG, -1L), event.getInventory().getResult(), DATE_NAMESPACE, PersistentDataType.LONG);
+                    tag(stack.getItemMeta().getPersistentDataContainer().getOrDefault(CREATE_NAMESPACE, PersistentDataType.LONG, -1L), event.getInventory().getResult(), CREATE_NAMESPACE, PersistentDataType.LONG);
                 }
             }
         }
@@ -116,8 +133,8 @@ public class DatingMachine extends ModItem implements Listener {
 
             long age = -1;
 
-            if(signContainer.has(DatingMachine.DATE_NAMESPACE, PersistentDataType.LONG)) {
-                age = signContainer.get(DatingMachine.DATE_NAMESPACE, PersistentDataType.LONG);
+            if(signContainer.has(DatingMachineItem.CREATE_NAMESPACE, PersistentDataType.LONG)) {
+                age = signContainer.get(DatingMachineItem.CREATE_NAMESPACE, PersistentDataType.LONG);
             }
 
             for(String[] s : coApi.blockLookup(event.getBlock(), Integer.MAX_VALUE)) {
@@ -129,16 +146,16 @@ public class DatingMachine extends ModItem implements Listener {
                     break;
                 }
             }
-            ItemStack sign = DatingMachine.tag(age, new ItemStack(Material.valueOf(event.getBlock().getType().name().replaceFirst("WALL_", ""))), DatingMachine.DATE_NAMESPACE, PersistentDataType.LONG);
+            ItemStack sign = DatingMachineItem.tag(age, new ItemStack(Material.valueOf(event.getBlock().getType().name().replaceFirst("WALL_", ""))), DatingMachineItem.CREATE_NAMESPACE, PersistentDataType.LONG);
             ItemMeta meta = sign.getItemMeta();
             PersistentDataContainer container = meta.getPersistentDataContainer();
 
 
-            container.set(DatingMachine.LINE_1_NAMESPACE, PersistentDataType.STRING, l1);
-            container.set(DatingMachine.LINE_2_NAMESPACE, PersistentDataType.STRING, l2);
-            container.set(DatingMachine.LINE_3_NAMESPACE, PersistentDataType.STRING, l3);
-            container.set(DatingMachine.LINE_4_NAMESPACE, PersistentDataType.STRING, l4);
-            container.set(DatingMachine.COLOR_NAMESPACE, PersistentDataType.STRING, ((Sign) state).getColor().name());
+            container.set(DatingMachineItem.LINE_1_NAMESPACE, PersistentDataType.STRING, l1);
+            container.set(DatingMachineItem.LINE_2_NAMESPACE, PersistentDataType.STRING, l2);
+            container.set(DatingMachineItem.LINE_3_NAMESPACE, PersistentDataType.STRING, l3);
+            container.set(DatingMachineItem.LINE_4_NAMESPACE, PersistentDataType.STRING, l4);
+            container.set(DatingMachineItem.COLOR_NAMESPACE, PersistentDataType.STRING, ((Sign) state).getColor().name());
 
             sign.setItemMeta(meta);
             event.setDropItems(false);
@@ -152,7 +169,7 @@ public class DatingMachine extends ModItem implements Listener {
 
         for(ItemStack stack : event.getLoot()) {
             if(AUTO_AGED.contains(stack.getType())) {
-                tag(Math.abs(x + random.nextInt(1000000)), stack, DATE_NAMESPACE, PersistentDataType.LONG);
+                tag(Math.abs(x + random.nextInt(1000000)), stack, CREATE_NAMESPACE, PersistentDataType.LONG);
             }
         }
     }

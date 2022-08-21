@@ -1,12 +1,19 @@
-package fly.scientific.machines;
+/*package fly.scientific.machines;
 
 import com.google.common.collect.Lists;
+import fly.metals.setup.MetalsAddonSetup;
+import fly.newmod.NewMod;
 import fly.newmod.bases.ModItem;
+import fly.scientific.setup.ScientificAddonSetup;
+import fly.technology.setup.TechnologyAddonSetup;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Hopper;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +29,16 @@ public class OresMachine extends ModItem {
 
     public OresMachine() {
         super(Material.HOPPER, "&4Ores Machine", "ores_machine");
+
+        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(NewMod.get(), "ores_machine"), this);
+
+        recipe.shape("AAA", "ARA", "ADA");
+
+        recipe.setIngredient('A', MetalsAddonSetup.ZINC_NUGGET);
+        recipe.setIngredient('R', new ItemStack(Material.REDSTONE));
+        recipe.setIngredient('D', TechnologyAddonSetup.SOUND_SCANNER);
+
+        addRecipe(recipe);
     }
 
     @Override
@@ -50,4 +67,4 @@ public class OresMachine extends ModItem {
             }
         }
     }
-}
+}*/

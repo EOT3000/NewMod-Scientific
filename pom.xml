@@ -60,6 +60,21 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/dep/newmod.jar</systemPath>
         </dependency>
-    </dependencies>
 
+        <dependency>
+            <groupId>com.fly</groupId>
+            <artifactId>metals</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/dep/metals.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fly</groupId>
+            <artifactId>technology</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/dep/technology.jar</systemPath>
+        </dependency>
+    </dependencies>
 </project>

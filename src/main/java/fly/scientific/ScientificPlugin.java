@@ -1,10 +1,12 @@
 package fly.scientific;
 
+import fly.metals.MetalsPlugin;
 import fly.newmod.NewMod;
-import fly.scientific.machines.DatingMachine;
+import fly.scientific.machines.DatingMachineItem;
 import fly.scientific.setup.ScientificAddonSetup;
 import fly.scientific.utils.PlayerIntMapWrapper;
 import fly.scientific.utils.PlayerTimeDataType;
+import fly.technology.TechnologyPlugin;
 import net.coreprotect.CoreProtect;
 import net.coreprotect.CoreProtectAPI;
 import org.bukkit.Bukkit;
@@ -23,12 +25,36 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class ScientificPlugin extends NewMod.ModExtension implements Listener {
+    private static ScientificPlugin INSTANCE;
+
+    public ScientificPlugin() {
+        INSTANCE = this;
+    }
+
+    public static ScientificPlugin get() {
+        return INSTANCE;
+    }
+
+
+
     @Override
     public void load() {
         ScientificAddonSetup.init();
+    }
+
+    @Override
+    public List<NewMod.ModExtension> requirements() {
+        ArrayList<NewMod.ModExtension> list = new ArrayList<>();
+
+        list.add(MetalsPlugin.getPlugin(MetalsPlugin.class));
+        list.add(TechnologyPlugin.getPlugin(TechnologyPlugin.class));
+
+        return list;
     }
 
     private void updateArmor(Player player, ItemStack stack, int ticks) {
@@ -39,11 +65,11 @@ public class ScientificPlugin extends NewMod.ModExtension implements Listener {
         ItemMeta meta = stack.getItemMeta();
 
         if(ticks % 100 == 0) {
-            PlayerIntMapWrapper wrapper = meta.getPersistentDataContainer().getOrDefault(DatingMachine.PLAYERS_NAMESPACE, PlayerTimeDataType.PLAYER_TIME_TYPE, new PlayerIntMapWrapper(new HashMap<>()));
+            PlayerIntMapWrapper wrapper = meta.getPersistentDataContainer().getOrDefault(DatingMachineItem.PLAYERS_NAMESPACE, PlayerTimeDataType.PLAYER_TIME_TYPE, new PlayerIntMapWrapper(new HashMap<>()));
 
             wrapper.add(player);
 
-            meta.getPersistentDataContainer().set(DatingMachine.PLAYERS_NAMESPACE, PlayerTimeDataType.PLAYER_TIME_TYPE, wrapper);
+            meta.getPersistentDataContainer().set(DatingMachineItem.PLAYERS_NAMESPACE, PlayerTimeDataType.PLAYER_TIME_TYPE, wrapper);
         }
 
         stack.setItemMeta(meta);
@@ -68,25 +94,30 @@ public class ScientificPlugin extends NewMod.ModExtension implements Listener {
 
     @Override
     public void onEnable() {
-        Bukkit.getPluginManager().registerEvents(this, this);
+        //new RuntimeException().printStackTrace();
+
+        //Bukkit.getPluginManager().registerEvents(this, this);
+
+        Bukkit.getPluginManager().registerEvents(ScientificAddonSetup.DATING_MACHINE, this);
+
     }
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         PersistentDataContainer cont = event.getItemInHand().getItemMeta().getPersistentDataContainer();
 
-        if(cont.has(DatingMachine.LINE_1_NAMESPACE, PersistentDataType.STRING)) {
+        if(cont.has(DatingMachineItem.LINE_1_NAMESPACE, PersistentDataType.STRING)) {
             Sign sign = ((Sign) event.getBlock().getState());
 
             //TODO: fix deprecation
 
-            sign.setLine(0, cont.get(DatingMachine.LINE_1_NAMESPACE, PersistentDataType.STRING));
-            sign.setLine(1, cont.get(DatingMachine.LINE_2_NAMESPACE, PersistentDataType.STRING));
-            sign.setLine(2, cont.get(DatingMachine.LINE_3_NAMESPACE, PersistentDataType.STRING));
-            sign.setLine(3, cont.get(DatingMachine.LINE_4_NAMESPACE, PersistentDataType.STRING));
-            sign.setColor(DyeColor.valueOf(cont.get(DatingMachine.COLOR_NAMESPACE, PersistentDataType.STRING)));
+            sign.setLine(0, cont.get(DatingMachineItem.LINE_1_NAMESPACE, PersistentDataType.STRING));
+            sign.setLine(1, cont.get(DatingMachineItem.LINE_2_NAMESPACE, PersistentDataType.STRING));
+            sign.setLine(2, cont.get(DatingMachineItem.LINE_3_NAMESPACE, PersistentDataType.STRING));
+            sign.setLine(3, cont.get(DatingMachineItem.LINE_4_NAMESPACE, PersistentDataType.STRING));
+            sign.setColor(DyeColor.valueOf(cont.get(DatingMachineItem.COLOR_NAMESPACE, PersistentDataType.STRING)));
 
-            sign.getPersistentDataContainer().set(DatingMachine.DATE_NAMESPACE, PersistentDataType.LONG, cont.get(DatingMachine.DATE_NAMESPACE, PersistentDataType.LONG));
+            sign.getPersistentDataContainer().set(DatingMachineItem.CREATE_NAMESPACE, PersistentDataType.LONG, cont.get(DatingMachineItem.CREATE_NAMESPACE, PersistentDataType.LONG));
 
             sign.update();
         }
@@ -108,8 +139,8 @@ public class ScientificPlugin extends NewMod.ModExtension implements Listener {
 
             long age = -1;
 
-            if(signContainer.has(DatingMachine.DATE_NAMESPACE, PersistentDataType.LONG)) {
-                age = signContainer.get(DatingMachine.DATE_NAMESPACE, PersistentDataType.LONG);
+            if(signContainer.has(DatingMachineItem.CREATE_NAMESPACE, PersistentDataType.LONG)) {
+                age = signContainer.get(DatingMachineItem.CREATE_NAMESPACE, PersistentDataType.LONG);
             }
 
             for(String[] s : coApi.blockLookup(event.getBlock(), Integer.MAX_VALUE)) {
@@ -121,16 +152,16 @@ public class ScientificPlugin extends NewMod.ModExtension implements Listener {
                     break;
                 }
             }
-            ItemStack sign = DatingMachine.tag(age, new ItemStack(Material.valueOf(event.getBlock().getType().name().replaceFirst("WALL_", ""))), DatingMachine.DATE_NAMESPACE, PersistentDataType.LONG);
+            ItemStack sign = DatingMachineItem.tag(age, new ItemStack(Material.valueOf(event.getBlock().getType().name().replaceFirst("WALL_", ""))), DatingMachineItem.CREATE_NAMESPACE, PersistentDataType.LONG);
             ItemMeta meta = sign.getItemMeta();
             PersistentDataContainer container = meta.getPersistentDataContainer();
 
 
-            container.set(DatingMachine.LINE_1_NAMESPACE, PersistentDataType.STRING, l1);
-            container.set(DatingMachine.LINE_2_NAMESPACE, PersistentDataType.STRING, l2);
-            container.set(DatingMachine.LINE_3_NAMESPACE, PersistentDataType.STRING, l3);
-            container.set(DatingMachine.LINE_4_NAMESPACE, PersistentDataType.STRING, l4);
-            container.set(DatingMachine.COLOR_NAMESPACE, PersistentDataType.STRING, ((Sign) state).getColor().name());
+            container.set(DatingMachineItem.LINE_1_NAMESPACE, PersistentDataType.STRING, l1);
+            container.set(DatingMachineItem.LINE_2_NAMESPACE, PersistentDataType.STRING, l2);
+            container.set(DatingMachineItem.LINE_3_NAMESPACE, PersistentDataType.STRING, l3);
+            container.set(DatingMachineItem.LINE_4_NAMESPACE, PersistentDataType.STRING, l4);
+            container.set(DatingMachineItem.COLOR_NAMESPACE, PersistentDataType.STRING, ((Sign) state).getColor().name());
 
             sign.setItemMeta(meta);
             event.setDropItems(false);
